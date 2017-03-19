@@ -19,13 +19,19 @@ var server = http.createServer(function(req, res) {
 			proxy.web(req, res, { target: 'http://mei.youzan.com' });
 			return;
 		}
-		res.end(data);
+		try {
+			JSON.parse(data);
+			res.end(data);
+		} catch(e) {
+			proxy.web(req, res, { target: 'http://mei.youzan.com' });
+		}
 	});
 });
 
 proxy.on('proxyRes', function(proxyRes, req, res) {
 	var filePath = path.resolve(cachePath, req.url.split('/').pop());
   	proxyRes.on('data', function(chunk) {
+  		if (filePath.indexOf('.json') < 0) return;
   		if (proxyRes.headers['content-encoding'] === 'gzip') {
   			zlib.unzip(chunk, { finishFlush: zlib.Z_SYNC_FLUSH }, function(err, buffer) {
 			  	if (!err) {
